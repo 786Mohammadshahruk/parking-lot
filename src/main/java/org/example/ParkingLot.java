@@ -1,37 +1,51 @@
 package org.example;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class ParkingLot {
     public int parkingCapacity;
-    public int maxCapacity;
+    public Set<Car> cars;
+
+    private List<ParkingLotObserver> parkingLotObserver;
 
     public ParkingLot(int parkingCapacity) {
         this.parkingCapacity = parkingCapacity;
-        this.maxCapacity = parkingCapacity;
+        cars = new HashSet<>();
+        parkingLotObserver = new ArrayList<>();
     }
 
-    public boolean checkCapacity() {
-        return parkingCapacity <= 0;
-    }
 
     public void park(Car car) throws ParkingCapacityExceedException {
-        if (checkCapacity()) {
+        if (cars.size() == parkingCapacity) {
             throw new ParkingCapacityExceedException("Parking Capacity Exceed");
         }
-        car.isParked = true;
-        parkingCapacity--;
+        if (isParked(car)) {
+            new VehicleAlreadyParkedException();
+        }
+        cars.add(car);
+        if (cars.size() == parkingCapacity) {
+            parkingLotObserver.forEach(ParkingLotObserver::notifyParkingFull);
+        }
+    }
+
+    public boolean isParked(Car car) {
+        return cars.contains(car);
+    }
+
+
+    public void unPark(Car car) {
+        cars.remove(car);
+        if (cars.size() + 1 == parkingCapacity) {
+            parkingLotObserver.forEach(ParkingLotObserver::notifyParkingAvailable);
+        }
+
 
     }
 
-    public boolean unPark(Car car) throws CarISNotParkedException {
-        if(this.parkingCapacity != maxCapacity){
-            return false;
-        }
-        if (car.isParked) {
-            this.parkingCapacity++;
-            car.isParked = false;
-            return true;
-        } else {
-            throw new CarISNotParkedException("Car is Not Parked");
-        }
+    public void register(ParkingLotObserver parkingLotObserver) {
+        this.parkingLotObserver.add(parkingLotObserver);
     }
 }
